@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Calorie Tracker</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div class="container">
+    <h1>Calorie Tracker</h1>
+
+    <!-- Add Meal -->
+    <div class="card">
+        <h2>Add Meal</h2>
+
+        <input type="text" id="foodName" placeholder="Food Name">
+        <input type="number" id="grams" placeholder="Grams">
+
+        <select id="mealType">
+            <option value="Breakfast">Breakfast</option>
+            <option value="Lunch">Lunch</option>
+            <option value="Dinner">Dinner</option>
+            <option value="Snack">Snack</option>
+        </select>
+
+        <input type="date" id="mealDate">
+
+        <button onclick="addMeal()">Add Meal</button>
+
+        <p id="mealMessage"></p>
+    </div>
+
+    <!-- Daily Summary -->
+    <div class="card">
+        <h2>Get Daily Summary</h2>
+
+        <input type="date" id="summaryDate">
+        <button onclick="getSummary()">Get Summary</button>
+
+        <div id="summaryResult"></div>
+    </div>
+
+</div>
+
+<script>
+
+async function addMeal() {
+    const foodName = document.getElementById("foodName").value;
+    const grams = parseFloat(document.getElementById("grams").value);
+    const mealType = document.getElementById("mealType").value;
+    const date = document.getElementById("mealDate").value;
+
+    const response = await fetch("/calories/meal/add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            food_name: foodName,
+            grams: grams,
+            meal_type: mealType,
+            date: date
+        })
+    });
+
+    const data = await response.json();
+
+    if (response.ok) {
+        document.getElementById("mealMessage").innerText =
+            "Meal Added! Calories: " + data.calculated_calories;
+    } else {
+        document.getElementById("mealMessage").innerText =
+            data.detail;
+    }
+}
+
+async function getSummary() {
+    const date = document.getElementById("summaryDate").value;
+
+    const response = await fetch(`/calories/summary?date=${date}`);
+    const data = await response.json();
+
+    let html = `<h3>Date: ${data.date}</h3>`;
+
+    data.meal_totals.forEach(meal => {
+        html += `<p>${meal.meal_type}: ${meal.calories} calories</p>`;
+    });
+
+    html += `<h3>Total Calories: ${data.total_calories}</h3>`;
+
+    document.getElementById("summaryResult").innerHTML = html;
+}
+
+</script>
+
+</body>
+</html>
